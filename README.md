@@ -9,7 +9,7 @@ android 计步器
        3.停止运动超过5秒，便重新开启屏蔽功能。
        
 ### DownLoad：
-#####[DEMO APK](https://github.com/renaudcerrato/ToggleDrawable/raw/master/sample/basepedo.apk)
+#####[DEMO APK](https://github.com/xfmax/BasePedo/raw/master/sample/basepedo.apk)
 
 我的邮箱：xufengbase@gmail.com
 
