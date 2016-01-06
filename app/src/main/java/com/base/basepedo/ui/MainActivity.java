@@ -13,8 +13,10 @@ import com.base.basepedo.service.StepService;
 
 public class MainActivity extends AppCompatActivity implements Handler.Callback{
 	private TextView text_step;
-	private final int STEPSHOW = 1;
+	private final int SHOW_STEP = 1;
 	private Handler mHandler;
+	private long TIME_INTERVAL = 150;
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,16 +32,16 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback{
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mHandler.sendEmptyMessage(STEPSHOW);
+		mHandler.sendEmptyMessage(SHOW_STEP);
 	}
 
 	@Override
 	public boolean handleMessage(Message msg) {
 		switch (msg.what) {
-			case STEPSHOW:
-				mHandler.removeMessages(STEPSHOW);
-				text_step.setText(StepDcretor.CURRENT_SETP + "");
-				mHandler.sendEmptyMessageDelayed(STEPSHOW, 150);
+			case SHOW_STEP:
+				mHandler.removeMessages(SHOW_STEP);
+				text_step.setText(Integer.toString(StepDcretor.CURRENT_SETP));
+				mHandler.sendEmptyMessageDelayed(SHOW_STEP, TIME_INTERVAL);
 				break;
 		}
 		return false;
