@@ -17,13 +17,21 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 
 import com.base.basepedo.R;
 import com.base.basepedo.config.Constant;
+import com.base.basepedo.pojo.StepData;
 import com.base.basepedo.service.StepDcretor.OnSensorChangeListener;
 import com.base.basepedo.ui.MainActivity;
+import com.base.basepedo.utils.CountDownTimer;
+import com.base.basepedo.utils.DbUtils;
+import com.litesuits.orm.LiteOrm;
+import com.litesuits.orm.db.assit.QueryBuilder;
+import com.litesuits.orm.db.model.ConflictAlgorithm;
 
 import java.util.Calendar;
+import java.util.List;
 
 public class StepService extends Service {
     private SensorManager sensorManager;
@@ -32,6 +40,8 @@ public class StepService extends Service {
     private NotificationManager nm;
     private NotificationCompat.Builder builder;
     private Messenger messenger = new Messenger(new MessenerHandler());
+    private TimeCount time;
+    private static final int duration = 10000;
 
     private static class MessenerHandler extends Handler {
         @Override
@@ -42,7 +52,7 @@ public class StepService extends Service {
                         Messenger messenger = msg.replyTo;
                         Message replyMsg = Message.obtain(null, Constant.MSG_FROM_SERVER);
                         Bundle bundle = new Bundle();
-                        bundle.putInt("step",StepDcretor.CURRENT_SETP);
+                        bundle.putInt("step", StepDcretor.CURRENT_SETP);
                         replyMsg.setData(bundle);
                         messenger.send(replyMsg);
                     } catch (RemoteException e) {
@@ -58,8 +68,31 @@ public class StepService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        startTimeCount();
+        new Thread(new Runnable() {
+            public void run() {
+                startStepDetector();
+            }
+        }).start();
+
+        DbUtils.createDb(this, "basepedo");
+        //获取当天的数据，用于展示
+//        List<StepData> list = liteOrm.query(StepData.class);
+        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{"20160130"});
+        if (list.size() == 0 || list.isEmpty()) {
+            StepDcretor.CURRENT_SETP = 0;
+        } else if(list.size() == 1){
+            StepDcretor.CURRENT_SETP = Integer.parseInt(list.get(0).getStep());
+        }else{
+            Log.v("xf","出错了！");
+        }
         //mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        setupNotification("今日步数：" + "0" + " 步");
+        setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+    }
+
+    private void startTimeCount() {
+        time = new TimeCount(duration, 1000);
+        time.start();
     }
 
     private void setupNotification(String content) {
@@ -98,11 +131,6 @@ public class StepService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        new Thread(new Runnable() {
-            public void run() {
-                startStepDetector();
-            }
-        }).start();
         return START_STICKY;
     }
 
@@ -133,9 +161,6 @@ public class StepService extends Service {
 
                             setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
 
-
-                            // // Log.i("stepchanged",
-                            // //
                             // "stepchanged&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
                             // if (userid == null) {
                             // userid = SpfOptUtils.getstrspfattr(
@@ -210,10 +235,48 @@ public class StepService extends Service {
         }
     }
 
+    class TimeCount extends CountDownTimer {
+        public TimeCount(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onFinish() {
+            // 如果计时器正常结束，则开始计步
+            time.cancel();
+            int tempStep = StepDcretor.CURRENT_SETP;
+
+            List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{"20160130"});
+            if (list.size() == 0 || list.isEmpty()) {
+                StepData data = new StepData();
+                data.setToday("20160130");
+                data.setStep(tempStep + "");
+                DbUtils.insert(data);
+                Log.v("xf", "插入成功");
+            } else if (list.size() == 1) {
+                StepData data = list.get(0);
+                data.setStep(tempStep + "");
+                DbUtils.update(data);
+                Log.v("xf", "更新成功");
+            } else {
+                Log.v("xf", "出错了！");
+            }
+            startTimeCount();
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+    }
+
+
     @Override
     public void onDestroy() {
         //取消前台进程
         stopForeground(true);
+        DbUtils.closeDb();
         super.onDestroy();
     }
 
