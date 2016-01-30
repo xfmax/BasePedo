@@ -8,14 +8,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.os.Binder;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.os.RemoteException;
 import android.support.v7.app.NotificationCompat;
-import android.widget.RemoteViews;
 
 import com.base.basepedo.R;
+import com.base.basepedo.config.Constant;
 import com.base.basepedo.service.StepDcretor.OnSensorChangeListener;
 import com.base.basepedo.ui.MainActivity;
 
@@ -27,17 +31,38 @@ public class StepService extends Service {
     private WakeLock mWakeLock;
     private NotificationManager nm;
     private NotificationCompat.Builder builder;
+    private Messenger messenger = new Messenger(new MessenerHandler());
+
+    private static class MessenerHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constant.MSG_FROM_CLIENT:
+                    try {
+                        Messenger messenger = msg.replyTo;
+                        Message replyMsg = Message.obtain(null, Constant.MSG_FROM_SERVER);
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("step",StepDcretor.CURRENT_SETP);
+                        replyMsg.setData(bundle);
+                        messenger.send(replyMsg);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         //mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        setupNotification("今日步数："+"0"+" 步");
-
+        setupNotification("今日步数：" + "0" + " 步");
     }
 
-
-    private void setupNotification(String content){
+    private void setupNotification(String content) {
         builder = new NotificationCompat.Builder(this);
         builder.setPriority(Notification.PRIORITY_MIN);
 
@@ -62,7 +87,7 @@ public class StepService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
 
-        return null;
+        return messenger.getBinder();
     }
 
 
@@ -78,7 +103,7 @@ public class StepService extends Service {
                 startStepDetector();
             }
         }).start();
-        return START_REDELIVER_INTENT;
+        return START_STICKY;
     }
 
     private void startStepDetector() {
@@ -106,7 +131,7 @@ public class StepService extends Service {
                         @Override
                         public void onChange() {
 
-                            setupNotification("今日步数："+StepDcretor.CURRENT_SETP+" 步");
+                            setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
 
 
                             // // Log.i("stepchanged",
