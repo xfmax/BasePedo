@@ -1,8 +1,10 @@
 package com.base.basepedo.ui;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
@@ -77,6 +79,8 @@ public class MainActivity extends AppCompatActivity  implements Handler.Callback
         text_step = (TextView) findViewById(R.id.text_step);
         delayHandler = new Handler(this);
     }
+
+
 
     @Override
     protected void onResume() {

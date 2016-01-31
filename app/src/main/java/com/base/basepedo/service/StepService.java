@@ -4,8 +4,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
@@ -41,7 +43,8 @@ public class StepService extends Service {
     private NotificationCompat.Builder builder;
     private Messenger messenger = new Messenger(new MessenerHandler());
     private TimeCount time;
-    private static final int duration = 10000;
+    private static int duration = 30000;
+    private BroadcastReceiver mBatInfoReceiver;
 
     private static class MessenerHandler extends Handler {
         @Override
@@ -68,6 +71,7 @@ public class StepService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        initBroadcastReceiver();
         startTimeCount();
         new Thread(new Runnable() {
             public void run() {
@@ -88,6 +92,50 @@ public class StepService extends Service {
         }
         //mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+    }
+
+    private void initBroadcastReceiver(){
+        final IntentFilter filter = new IntentFilter();
+        // 屏幕灭屏广播
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        //关机广播
+        filter.addAction(Intent.ACTION_SHUTDOWN);
+        // 屏幕亮屏广播
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        // 屏幕解锁广播
+        filter.addAction(Intent.ACTION_USER_PRESENT);
+        // 当长按电源键弹出“关机”对话或者锁屏时系统会发出这个广播
+        // example：有时候会用到系统对话框，权限可能很高，会覆盖在锁屏界面或者“关机”对话框之上，
+        // 所以监听这个广播，当收到时就隐藏自己的对话，如点击pad右下角部分弹出的对话框
+        filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+
+        mBatInfoReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(final Context context, final Intent intent) {
+                String action = intent.getAction();
+
+                if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                    Log.d("xf", "screen on");
+                } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                    Log.d("xf", "screen off");
+                    //改为60秒一存储
+                    duration = 60000;
+                } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
+                    Log.d("xf", "screen unlock");
+                    save();
+                    //改为30秒一存储
+                    duration = 30000;
+                } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(intent.getAction())) {
+                    Log.i("xf", " receive Intent.ACTION_CLOSE_SYSTEM_DIALOGS");
+                    //保存一次
+                    save();
+                }else if(Intent.ACTION_SHUTDOWN.equals(intent.getAction())){
+                    Log.i("xf", " receive ACTION_SHUTDOWN");
+                    save();
+                }
+            }
+        };
+        registerReceiver(mBatInfoReceiver, filter);
     }
 
     private void startTimeCount() {
@@ -161,14 +209,6 @@ public class StepService extends Service {
 
                             setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
 
-                            // "stepchanged&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
-                            // if (userid == null) {
-                            // userid = SpfOptUtils.getstrspfattr(
-                            // LocationService.this, Constants.USERID);
-                            // }
-                            // // Intent intent = new
-                            // // Intent("com.pedometer.changeaction");
-                            // // sendBroadcast(intent);
                             // long curtime = System.currentTimeMillis();
                             // if (curtime - perSaveStepTime >= 30000
                             // && StepDcretor.CURRENT_RANGE_NUM > 0) {
@@ -244,23 +284,7 @@ public class StepService extends Service {
         public void onFinish() {
             // 如果计时器正常结束，则开始计步
             time.cancel();
-            int tempStep = StepDcretor.CURRENT_SETP;
-
-            List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{"20160130"});
-            if (list.size() == 0 || list.isEmpty()) {
-                StepData data = new StepData();
-                data.setToday("20160130");
-                data.setStep(tempStep + "");
-                DbUtils.insert(data);
-                Log.v("xf", "插入成功");
-            } else if (list.size() == 1) {
-                StepData data = list.get(0);
-                data.setStep(tempStep + "");
-                DbUtils.update(data);
-                Log.v("xf", "更新成功");
-            } else {
-                Log.v("xf", "出错了！");
-            }
+            save();
             startTimeCount();
         }
 
@@ -271,12 +295,33 @@ public class StepService extends Service {
 
     }
 
+    private void save(){
+        int tempStep = StepDcretor.CURRENT_SETP;
+
+        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{"20160130"});
+        if (list.size() == 0 || list.isEmpty()) {
+            StepData data = new StepData();
+            data.setToday("20160130");
+            data.setStep(tempStep + "");
+            DbUtils.insert(data);
+            Log.v("xf", "插入成功");
+        } else if (list.size() == 1) {
+            StepData data = list.get(0);
+            data.setStep(tempStep + "");
+            DbUtils.update(data);
+            Log.v("xf", "更新成功");
+        } else {
+            Log.v("xf", "出错了！");
+        }
+    }
+
 
     @Override
     public void onDestroy() {
         //取消前台进程
         stopForeground(true);
         DbUtils.closeDb();
+        unregisterReceiver(mBatInfoReceiver);
         super.onDestroy();
     }
 
