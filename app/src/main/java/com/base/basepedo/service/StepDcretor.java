@@ -97,10 +97,9 @@ public class StepDcretor implements SensorEventListener {
                                 CountTimeState = 3;
                             } else if (CountTimeState == 3) {
                                 CURRENT_SETP++;
-                            }
-
-                            if (onSensorChangeListener != null) {
-                                onSensorChangeListener.onChange();
+                                if (onSensorChangeListener != null) {
+                                    onSensorChangeListener.onChange();
+                                }
                             }
                         }
                     }

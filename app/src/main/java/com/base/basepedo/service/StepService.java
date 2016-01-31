@@ -28,23 +28,24 @@ import com.base.basepedo.service.StepDcretor.OnSensorChangeListener;
 import com.base.basepedo.ui.MainActivity;
 import com.base.basepedo.utils.CountDownTimer;
 import com.base.basepedo.utils.DbUtils;
-import com.litesuits.orm.LiteOrm;
-import com.litesuits.orm.db.assit.QueryBuilder;
-import com.litesuits.orm.db.model.ConflictAlgorithm;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class StepService extends Service {
+    //默认为30秒进行一次存储
+    private static int duration = 30000;
+    private static String CURRENTDATE = "20160130";
     private SensorManager sensorManager;
     private StepDcretor stepDetector;
-    private WakeLock mWakeLock;
     private NotificationManager nm;
     private NotificationCompat.Builder builder;
     private Messenger messenger = new Messenger(new MessenerHandler());
-    private TimeCount time;
-    private static int duration = 30000;
     private BroadcastReceiver mBatInfoReceiver;
+    private WakeLock mWakeLock;
+    private TimeCount time;
 
     private static class MessenerHandler extends Handler {
         @Override
@@ -71,18 +72,31 @@ public class StepService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        CURRENTDATE = getTodayDate();
+        Log.v("xf","CURRENTDATE:"+CURRENTDATE);
         initBroadcastReceiver();
-        startTimeCount();
         new Thread(new Runnable() {
             public void run() {
                 startStepDetector();
             }
         }).start();
 
+        startTimeCount();
+        initTodayData();
+
+        updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+    }
+
+    private String getTodayDate(){
+        Date date = new Date(System.currentTimeMillis());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(date);
+    }
+
+    private void initTodayData(){
         DbUtils.createDb(this, "basepedo");
         //获取当天的数据，用于展示
-//        List<StepData> list = liteOrm.query(StepData.class);
-        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{"20160130"});
+        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
             StepDcretor.CURRENT_SETP = 0;
         } else if(list.size() == 1){
@@ -90,8 +104,6 @@ public class StepService extends Service {
         }else{
             Log.v("xf","出错了！");
         }
-        //mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
     }
 
     private void initBroadcastReceiver(){
@@ -143,7 +155,11 @@ public class StepService extends Service {
         time.start();
     }
 
-    private void setupNotification(String content) {
+    /**
+     * 更新通知
+     *
+     * */
+    private void updateNotification(String content) {
         builder = new NotificationCompat.Builder(this);
         builder.setPriority(Notification.PRIORITY_MIN);
 
@@ -206,70 +222,7 @@ public class StepService extends Service {
 
                         @Override
                         public void onChange() {
-
-                            setupNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
-
-                            // long curtime = System.currentTimeMillis();
-                            // if (curtime - perSaveStepTime >= 30000
-                            // && StepDcretor.CURRENT_RANGE_NUM > 0) {
-                            // Calendar curc = Calendar.getInstance();
-                            // curc.setTimeInMillis(curtime);
-                            // int minute = curc.get(Calendar.MINUTE);
-                            //
-                            // if (minute <= 15) {
-                            // curc.set(Calendar.MINUTE, 0);
-                            // } else if (minute > 15 && minute <= 30) {
-                            // curc.set(Calendar.MINUTE, 15);
-                            // } else if (minute > 30 && minute <= 45) {
-                            // curc.set(Calendar.MINUTE, 30);
-                            // } else if (minute > 45) {
-                            // curc.set(Calendar.MINUTE, 45);
-                            // }
-                            // curc.set(Calendar.SECOND, 0);
-                            // curc.set(Calendar.MILLISECOND, 0);
-                            // if (stepDetector.CURRENT_SETP > 0) {
-                            // int savedstepnum = getCurTimeStepNum(curc
-                            // .getTimeInMillis());
-                            // int savedamplitudenum = getCurTimeAmiNum(curc
-                            // .getTimeInMillis());
-                            // if (userid == null)
-                            // userid = SpfOptUtils.getstrspfattr(
-                            // LocationService.this,
-                            // Constants.USERID);
-                            // addStepNum(userid, curc.getTimeInMillis(),
-                            // StepDcretor.CURRENT_SETP
-                            // + savedstepnum,
-                            // StepDcretor.CURRENT_RANGE_NUM
-                            // + savedamplitudenum);
-                            // StepDcretor.CURRENT_SETP = 0;
-                            // StepDcretor.CURRENT_RANGE_NUM = 0;
-                            // perSaveStepTime = curtime;
-                            //
-                            // int dayTotalStepNum = getDayTotalStepNum();
-                            //
-                            // int hisHeight = SpfOptUtils.getintspfattr(
-                            // LocationService.this,
-                            // Constants.MYSTEPNUMMAX);
-                            // if (dayTotalStepNum > hisHeight) {
-                            // SpfOptUtils.addintspfattr(
-                            // LocationService.this,
-                            // Constants.MYSTEPNUMMAX,
-                            // dayTotalStepNum);
-                            // }
-                            //
-                            // int dayTotalAmiNum = getDayTotalAmiNum();
-                            // int hisAmiHeight = SpfOptUtils
-                            // .getintspfattr(
-                            // LocationService.this,
-                            // Constants.MYAMINUMMAX);
-                            // if (dayTotalAmiNum > hisAmiHeight) {
-                            // SpfOptUtils.addintspfattr(
-                            // LocationService.this,
-                            // Constants.MYAMINUMMAX,
-                            // dayTotalAmiNum);
-                            // }
-                            // }
-                            // }
+                            updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
                         }
                     });
         }
@@ -298,10 +251,10 @@ public class StepService extends Service {
     private void save(){
         int tempStep = StepDcretor.CURRENT_SETP;
 
-        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{"20160130"});
+        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
             StepData data = new StepData();
-            data.setToday("20160130");
+            data.setToday(CURRENTDATE);
             data.setStep(tempStep + "");
             DbUtils.insert(data);
             Log.v("xf", "插入成功");
@@ -346,13 +299,11 @@ public class StepService extends Service {
             Calendar c = Calendar.getInstance();
             c.setTimeInMillis(System.currentTimeMillis());
             int hour = c.get(Calendar.HOUR_OF_DAY);
-            // if (LoopNewMainActivity.isOnDestroy) {
             if (hour >= 23 || hour <= 6) {
                 mWakeLock.acquire(5000);
             } else {
                 mWakeLock.acquire(300000);
             }
-            // }
         }
 
         return (mWakeLock);
