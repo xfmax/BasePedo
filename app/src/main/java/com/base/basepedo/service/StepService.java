@@ -27,7 +27,6 @@ import com.base.basepedo.pojo.StepData;
 import com.base.basepedo.service.StepDcretor.OnSensorChangeListener;
 import com.base.basepedo.ui.MainActivity;
 import com.base.basepedo.utils.CountDownTimer;
-import com.base.basepedo.utils.DbUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
