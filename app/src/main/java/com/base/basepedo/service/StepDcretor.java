@@ -37,7 +37,7 @@ public class StepDcretor implements SensorEventListener {
 
     private Timer timer;
     // 倒计时8秒，8秒内不会显示计步，用于屏蔽细微波动
-    private long duration = 8000;
+    private long duration = 6000;
     private TimeCount time;
 
     OnSensorChangeListener onSensorChangeListener;
