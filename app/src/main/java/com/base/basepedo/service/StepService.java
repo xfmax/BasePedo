@@ -27,6 +27,7 @@ import com.base.basepedo.pojo.StepData;
 import com.base.basepedo.service.StepDcretor.OnSensorChangeListener;
 import com.base.basepedo.ui.MainActivity;
 import com.base.basepedo.utils.CountDownTimer;
+import com.base.basepedo.utils.DbUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -225,6 +226,14 @@ public class StepService extends Service {
                         }
                     });
         }
+
+        //android4.4以后可以使用计步传感器
+//        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+//        if (countSensor != null) {
+//            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
+//        } else {
+//            Toast.makeText(this, "Count sensor not available!", Toast.LENGTH_LONG).show();
+//        }
     }
 
     class TimeCount extends CountDownTimer {
@@ -274,6 +283,8 @@ public class StepService extends Service {
         stopForeground(true);
         DbUtils.closeDb();
         unregisterReceiver(mBatInfoReceiver);
+        Intent intent = new Intent(this, StepService.class);
+        startService(intent);
         super.onDestroy();
     }
 
@@ -281,6 +292,15 @@ public class StepService extends Service {
     public boolean onUnbind(Intent intent) {
         return super.onUnbind(intent);
     }
+
+//    private  void unlock(){
+//        setLockPatternEnabled(android.provider.Settings.Secure.LOCK_PATTERN_ENABLED,false);
+//    }
+//
+//    private void setLockPatternEnabled(String systemSettingKey, boolean enabled) {
+//        //推荐使用
+//        android.provider.Settings.Secure.putInt(getContentResolver(), systemSettingKey,enabled ? 1 : 0);
+//    }
 
     synchronized private PowerManager.WakeLock getLock(Context context) {
         if (mWakeLock != null) {
