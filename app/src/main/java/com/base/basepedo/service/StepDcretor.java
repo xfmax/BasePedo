@@ -12,14 +12,24 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StepDcretor implements SensorEventListener {
+    float avg_v = 0;
+    float min_v = 0;
+    float max_v = 0;
+
+    int acc_count = 0;
+    int up_c = 0;
+    int down_c = 0;
+    long pre_time = 0;
+
+
     private final String TAG = "StepDcretor";
     // alpha 由 t / (t + dT)计算得来，其中 t 是低通滤波器的时间常数，dT 是事件报送频率
     private final float alpha = 0.8f;
     private long perCalTime = 0;
 
     //最新修改的精度值
-    private final float minValue = 9.7f;
-    private final float maxValue = 9.8f;
+    private final float minValue = 9.8f;
+    private final float maxValue = 9.9f;
     //9.5f
 //    private final float verminValue = 8.5f;
     //10.0f
@@ -54,67 +64,14 @@ public class StepDcretor implements SensorEventListener {
         Sensor sensor = event.sensor;
         synchronized (this) {
             if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                calc_step(event);
 
-                // 用低通滤波器分离出重力加速度
-                gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
-                gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
-                gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
-
-                average = (float) Math.sqrt(Math.pow(gravity[0], 2)
-                        + Math.pow(gravity[1], 2) + Math.pow(gravity[2], 2));
-
-//                if (average <= verminValue) {
-                if (average <= minValue) {
-                    Log.v("xfblog","低");
-                    perCalTime = System.currentTimeMillis();
-                }
-//                } else if (average >= vermaxValue) {
-                else if (average >= maxValue) {
-                    Log.v("xfblog","高");
-                    float betweentime = System.currentTimeMillis()
-                            - perCalTime;
-                    if (betweentime >= minTime && betweentime < maxTime) {
-                        perCalTime = 0;
-                        if (CountTimeState == 0) {
-                            // 开启计时器
-                            time = new TimeCount(duration, 800);
-                            time.start();
-                            CountTimeState = 1;
-                            Log.v(TAG, "开启计时器");
-                        } else if (CountTimeState == 1) {
-                            TEMP_STEP++;
-                            Log.v(TAG, "计步中 TEMP_STEP:" + TEMP_STEP);
-                        }
-//                        else if (CountTimeState == 2) {
-//                            timer = new Timer(true);
-//                            TimerTask task = new TimerTask() {
-//                                public void run() {
-//                                    if (lastStep == CURRENT_SETP) {
-//                                        timer.cancel();
-//                                        CountTimeState = 0;
-//                                        lastStep = -1;
-//                                        TEMP_STEP = 0;
-//                                        Log.v(TAG, "停止计步：" + CURRENT_SETP);
-//                                    } else {
-//                                        lastStep = CURRENT_SETP;
-//                                    }
-//                                }
-//                            };
-//                            timer.schedule(task, 0, 2000);
-//                            CountTimeState = 3;
-//                        }
-                        else if (CountTimeState == 3) {
-                            CURRENT_SETP++;
-                            if (onSensorChangeListener != null) {
-                                onSensorChangeListener.onChange();
-                            }
-                        }
-                    }
-                }
-//                  }
             }
         }
     }
+
+
+
 
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
@@ -179,5 +136,148 @@ public class StepDcretor implements SensorEventListener {
             }
         }
 
+    }
+
+
+    void avg_check_v(float v) {
+        acc_count++;
+        //求移动平均线
+        //50ms 1 second 20 , 3 sec60;
+        if (acc_count < 64) {
+            //avg_v=((acc_count-1)*avg_v+v)/acc_count;
+            avg_v = avg_v + (v - avg_v) / acc_count;
+        } else {
+            //avg_v=(avg_v*99+v)/100;
+            avg_v = avg_v * 63 / 64 + v / 64;
+        }
+
+        if (v > avg_v) {
+            up_c++;
+            if (up_c == 1) {
+                //Log.e("wokao","diff:"+(max_v-min_v));
+                max_v = avg_v;
+            } else {
+                max_v = Math.max(v, max_v);
+            }
+            if (up_c >= 2) {
+                down_c = 0;
+            }
+        } else {
+            down_c++;
+            if (down_c == 1) {
+                min_v = v;
+            } else {
+                min_v = Math.min(v, min_v);
+            }
+            if (down_c >= 2) {
+                up_c = 0;
+            }
+        }
+        //Log.e("wokao","avg_v:"+avg_v+",v:"+v+",uc"+up_c+",dc:"+down_c);
+
+        if (up_c == 2 && (max_v - min_v) > 2) {
+            //
+            long cur_time = System.currentTimeMillis();
+            if (cur_time - pre_time > 250) {
+                pre_time = cur_time;
+                preStep();
+//                StepDcretor.CURRENT_SETP++;
+//                //记步，通知ui
+//                if (onSensorChangeListener != null) {
+//                    onSensorChangeListener.onChange();
+//                }
+                Log.e("xfblog","CURRENT_SETP:"+CURRENT_SETP);
+            } else {
+                up_c = 1;
+            }
+        }
+    }
+
+    synchronized private void calc_step(SensorEvent arg0) {
+        float v = (float) Math.sqrt(arg0.values[0] * arg0.values[0] + arg0.values[1] * arg0.values[1] + arg0.values[2] * arg0.values[2]);
+        avg_check_v(v);
+    }
+
+    private void preStep(){
+        if (CountTimeState == 0) {
+            // 开启计时器
+            time = new TimeCount(duration, 700);
+            time.start();
+            CountTimeState = 1;
+            Log.v(TAG, "开启计时器");
+        } else if (CountTimeState == 1) {
+            TEMP_STEP++;
+            Log.v(TAG, "计步中 TEMP_STEP:" + TEMP_STEP);
+        } else if (CountTimeState == 3) {
+            CURRENT_SETP++;
+            if (onSensorChangeListener != null) {
+                onSensorChangeListener.onChange();
+            }
+        }
+    }
+
+
+
+    private void oldCalStep(SensorEvent event){
+        // 用低通滤波器分离出重力加速度
+        gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
+        gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
+        gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+
+        average = (float) Math.sqrt(Math.pow(gravity[0], 2)
+                + Math.pow(gravity[1], 2) + Math.pow(gravity[2], 2));
+
+//                if (average <= verminValue) {
+        if (average <= minValue) {
+            Log.v("xfblog","低");
+            perCalTime = System.currentTimeMillis();
+        }
+//                } else if (average >= vermaxValue) {
+        else if (average >= maxValue) {
+            Log.v("xfblog","高");
+            float betweentime = System.currentTimeMillis()
+                    - perCalTime;
+            if (betweentime >= minTime && betweentime < maxTime) {
+                perCalTime = 0;
+                if (CountTimeState == 0) {
+                    // 开启计时器
+                    time = new TimeCount(duration, 800);
+                    time.start();
+                    CountTimeState = 1;
+                    Log.v(TAG, "开启计时器");
+                } else if (CountTimeState == 1) {
+                    TEMP_STEP++;
+                    Log.v(TAG, "计步中 TEMP_STEP:" + TEMP_STEP);
+                }
+//                        else if (CountTimeState == 2) {
+//                            timer = new Timer(true);
+//                            TimerTask task = new TimerTask() {
+//                                public void run() {
+//                                    if (lastStep == CURRENT_SETP) {
+//                                        timer.cancel();
+//                                        CountTimeState = 0;
+//                                        lastStep = -1;
+//                                        TEMP_STEP = 0;
+//                                        Log.v(TAG, "停止计步：" + CURRENT_SETP);
+//                                    } else {
+//                                        lastStep = CURRENT_SETP;
+//                                    }
+//                                }
+//                            };
+//                            timer.schedule(task, 0, 2000);
+//                            CountTimeState = 3;
+//                        }
+                else if (CountTimeState == 3) {
+                    CURRENT_SETP++;
+                    if (onSensorChangeListener != null) {
+                        onSensorChangeListener.onChange();
+                    }
+                }
+
+
+
+            }
+        }
+//                  }
     }
 }
