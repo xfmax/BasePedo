@@ -16,6 +16,8 @@ public class StepDcretor implements SensorEventListener {
     // alpha 由 t / (t + dT)计算得来，其中 t 是低通滤波器的时间常数，dT 是事件报送频率
     private final float alpha = 0.8f;
     private long perCalTime = 0;
+
+    //最新修改的精度值
     private final float minValue = 9.6f;
     private final float maxValue = 9.8f;
     //9.5f
