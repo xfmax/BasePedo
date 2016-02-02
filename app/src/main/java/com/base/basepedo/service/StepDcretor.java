@@ -18,7 +18,7 @@ public class StepDcretor implements SensorEventListener {
     private long perCalTime = 0;
 
     //最新修改的精度值
-    private final float minValue = 9.6f;
+    private final float minValue = 9.7f;
     private final float maxValue = 9.8f;
     //9.5f
 //    private final float verminValue = 8.5f;
