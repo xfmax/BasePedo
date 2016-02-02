@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,7 +26,6 @@ import android.util.Log;
 import com.base.basepedo.R;
 import com.base.basepedo.config.Constant;
 import com.base.basepedo.pojo.StepData;
-import com.base.basepedo.service.StepDcretor.OnSensorChangeListener;
 import com.base.basepedo.ui.MainActivity;
 import com.base.basepedo.utils.CountDownTimer;
 import com.base.basepedo.utils.DbUtils;
@@ -34,7 +35,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class StepService extends Service {
+public class StepService extends Service implements SensorEventListener {
     //默认为30秒进行一次存储
     private static int duration = 30000;
     private static String CURRENTDATE = "20160130";
@@ -46,6 +47,11 @@ public class StepService extends Service {
     private BroadcastReceiver mBatInfoReceiver;
     private WakeLock mWakeLock;
     private TimeCount time;
+
+    //测试
+    private static  int i = 0;
+
+
 
     private static class MessenerHandler extends Handler {
         @Override
@@ -218,7 +224,7 @@ public class StepService extends Service {
             sensorManager.registerListener(stepDetector, sensor,
                     SensorManager.SENSOR_DELAY_GAME);
             stepDetector
-                    .setOnSensorChangeListener(new OnSensorChangeListener() {
+                    .setOnSensorChangeListener(new StepDcretor.OnSensorChangeListener() {
 
                         @Override
                         public void onChange() {
@@ -228,13 +234,28 @@ public class StepService extends Service {
         }
 
         //android4.4以后可以使用计步传感器
-//        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+//        sensorManager = (SensorManager) this
+//                    .getSystemService(SENSOR_SERVICE);
+//        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
 //        if (countSensor != null) {
-//            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
+//            sensorManager.registerListener(StepService.this, countSensor, SensorManager.SENSOR_DELAY_UI);
 //        } else {
+//            Looper.prepare();
 //            Toast.makeText(this, "Count sensor not available!", Toast.LENGTH_LONG).show();
 //        }
     }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        StepDcretor.CURRENT_SETP++;
+        updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
 
     class TimeCount extends CountDownTimer {
         public TimeCount(long millisInFuture, long countDownInterval) {
