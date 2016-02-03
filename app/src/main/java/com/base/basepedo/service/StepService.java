@@ -222,33 +222,32 @@ public class StepService extends Service implements SensorEventListener {
                     .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             // sensorManager.unregisterListener(stepDetector);
             sensorManager.registerListener(stepDetector, sensor,
-                    SensorManager.SENSOR_DELAY_GAME);
+                    SensorManager.SENSOR_DELAY_UI);
             stepDetector
                     .setOnSensorChangeListener(new StepDcretor.OnSensorChangeListener() {
 
                         @Override
                         public void onChange() {
-                            updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+                            updateNotification("今日步数：" + StepDcretor.CURRENT_SETP +","+i+ " 步");
                         }
                     });
         }
 
         //android4.4以后可以使用计步传感器
-//        sensorManager = (SensorManager) this
-//                    .getSystemService(SENSOR_SERVICE);
-//        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-//        if (countSensor != null) {
-//            sensorManager.registerListener(StepService.this, countSensor, SensorManager.SENSOR_DELAY_UI);
-//        } else {
-//            Looper.prepare();
-//            Toast.makeText(this, "Count sensor not available!", Toast.LENGTH_LONG).show();
-//        }
+        sensorManager = (SensorManager) this
+                    .getSystemService(SENSOR_SERVICE);
+        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+        if (countSensor != null) {
+            sensorManager.registerListener(StepService.this, countSensor, SensorManager.SENSOR_DELAY_UI);
+        } else {
+            Log.v("xf","Count sensor not available!");
+        }
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        StepDcretor.CURRENT_SETP++;
-        updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+        i++;
+    //    updateNotification("今日步数：" + i + " 步");
     }
 
     @Override
