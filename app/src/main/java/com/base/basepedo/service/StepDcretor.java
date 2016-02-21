@@ -45,17 +45,6 @@ public class StepDcretor implements SensorEventListener {
     //初始阈值
     float ThreadValue = (float) 2.0;
 
-
-    float avg_v = 0;
-    float min_v = 0;
-    float max_v = 0;
-
-    int acc_count = 0;
-    int up_c = 0;
-    int down_c = 0;
-    long pre_time = 0;
-
-
     private final String TAG = "StepDcretor";
     // alpha 由 t / (t + dT)计算得来，其中 t 是低通滤波器的时间常数，dT 是事件报送频率
     private final float alpha = 0.8f;
@@ -165,57 +154,6 @@ public class StepDcretor implements SensorEventListener {
             }
         }
 
-    }
-
-
-    void avg_check_v(float v) {
-        acc_count++;
-        //求移动平均线
-        //50ms 1 second 20 , 3 sec60;
-        if (acc_count < 34) {
-            //avg_v=((acc_count-1)*avg_v+v)/acc_count;
-            avg_v = avg_v + (v - avg_v) / acc_count;
-        } else {
-            //avg_v=(avg_v*99+v)/100;
-            avg_v = avg_v * 33 / 34 + v / 34;
-        }
-
-        if (v > avg_v) {
-            up_c++;
-            if (up_c == 1) {
-                //Log.e("wokao","diff:"+(max_v-min_v));
-                max_v = avg_v;
-            } else {
-                max_v = Math.max(v, max_v);
-            }
-            if (up_c >= 2) {
-                down_c = 0;
-            }
-        } else {
-            down_c++;
-            if (down_c == 1) {
-                min_v = v;
-            } else {
-                min_v = Math.min(v, min_v);
-            }
-            if (down_c >= 2) {
-                up_c = 0;
-            }
-        }
-        //Log.e("wokao","avg_v:"+avg_v+",v:"+v+",uc"+up_c+",dc:"+down_c);
-
-        if (up_c == 2 && (max_v - min_v) > 2) {
-            //
-            long cur_time = System.currentTimeMillis();
-            if (cur_time - pre_time >= 500
-                    ) {
-                pre_time = cur_time;
-                preStep();
-                Log.e("xfblog", "CURRENT_SETP:" + CURRENT_SETP);
-            } else {
-                up_c = 1;
-            }
-        }
     }
 
     synchronized private void calc_step(SensorEvent event) {
@@ -329,10 +267,8 @@ public class StepDcretor implements SensorEventListener {
 					 * 2.例如记录的9步用户停住超过3秒，则前面的记录失效，下次从头开始
 					 * 3.连续记录了9步用户还在运动，之前的数据才有效
 					 * */
-                    StepDcretor.CURRENT_SETP++;
-                    if (onSensorChangeListener != null) {
-                        onSensorChangeListener.onChange();
-                    }
+
+                    preStep();
                 }
                 if (timeOfNow - timeOfLastPeak >= 250
                         && (peakOfWave - valleyOfWave >= initialValue)) {
