@@ -43,7 +43,7 @@ public class StepDcretor implements SensorEventListener {
     //动态阈值需要动态的数据，这个值用于这些动态数据的阈值
     final float initialValue = (float) 1.8;
     //初始阈值
-    float ThreadValue = (float) 2.0;
+    float ThreadValue = (float) 2.5;
 
     private final String TAG = "StepDcretor";
     // alpha 由 t / (t + dT)计算得来，其中 t 是低通滤波器的时间常数，dT 是事件报送频率
@@ -303,7 +303,7 @@ public class StepDcretor implements SensorEventListener {
         }
 
         if (!isDirectionUp && lastStatus
-                && (continueUpFormerCount >= 2 || oldValue >= 15)) {
+                && (continueUpFormerCount >= 2 || oldValue >= 20)) {
             peakOfWave = oldValue;
             return true;
         } else if (!lastStatus && isDirectionUp) {
