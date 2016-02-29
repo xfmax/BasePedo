@@ -41,7 +41,7 @@ public class StepDcretor implements SensorEventListener {
     //上次传感器的值
     float gravityOld = 0;
     //动态阈值需要动态的数据，这个值用于这些动态数据的阈值
-    final float initialValue = (float) 1.8;
+    final float initialValue = (float) 1.7;
     //初始阈值
     float ThreadValue = (float) 2.0;
 
@@ -257,10 +257,10 @@ public class StepDcretor implements SensorEventListener {
             if (DetectorPeak(values, gravityOld)) {
                 timeOfLastPeak = timeOfThisPeak;
                 timeOfNow = System.currentTimeMillis();
-                if (timeOfNow - timeOfLastPeak >= 250
+                if (timeOfNow - timeOfLastPeak >= 200
                         && (peakOfWave - valleyOfWave >= ThreadValue) && timeOfNow - timeOfLastPeak <= 2000) {
                     timeOfThisPeak = timeOfNow;
-					/*
+                    /*
 					 * 更新界面的处理，不涉及到算法
 					 * 一般在通知更新界面之前，增加下面处理，为了处理无效运动：
 					 * 1.连续记录10才开始计步
@@ -270,7 +270,7 @@ public class StepDcretor implements SensorEventListener {
 
                     preStep();
                 }
-                if (timeOfNow - timeOfLastPeak >= 250
+                if (timeOfNow - timeOfLastPeak >= 200
                         && (peakOfWave - valleyOfWave >= initialValue)) {
                     timeOfThisPeak = timeOfNow;
                     ThreadValue = Peak_Valley_Thread(peakOfWave - valleyOfWave);
@@ -303,7 +303,7 @@ public class StepDcretor implements SensorEventListener {
         }
 
         if (!isDirectionUp && lastStatus
-                && (continueUpFormerCount >= 2 || oldValue >= 15)) {
+                && (continueUpFormerCount >= 2 && oldValue >= 11.76 && oldValue < 19.6)) {
             peakOfWave = oldValue;
             return true;
         } else if (!lastStatus && isDirectionUp) {
