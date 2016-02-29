@@ -12,6 +12,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -38,7 +39,7 @@ import java.util.List;
 public class StepService extends Service implements SensorEventListener {
     //默认为30秒进行一次存储
     private static int duration = 30000;
-    private static String CURRENTDATE = "20160130";
+    private static String CURRENTDATE = "";
     private SensorManager sensorManager;
     private StepDcretor stepDetector;
     private NotificationManager nm;
@@ -49,8 +50,7 @@ public class StepService extends Service implements SensorEventListener {
     private TimeCount time;
 
     //测试
-    private static  int i = 0;
-
+    private static int i = 0;
 
 
     private static class MessenerHandler extends Handler {
@@ -79,7 +79,6 @@ public class StepService extends Service implements SensorEventListener {
     public void onCreate() {
         super.onCreate();
         CURRENTDATE = getTodayDate();
-        Log.v("xf","CURRENTDATE:"+CURRENTDATE);
         initBroadcastReceiver();
         new Thread(new Runnable() {
             public void run() {
@@ -93,26 +92,26 @@ public class StepService extends Service implements SensorEventListener {
         updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
     }
 
-    private String getTodayDate(){
+    private String getTodayDate() {
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         return sdf.format(date);
     }
 
-    private void initTodayData(){
+    private void initTodayData() {
         DbUtils.createDb(this, "basepedo");
         //获取当天的数据，用于展示
         List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
             StepDcretor.CURRENT_SETP = 0;
-        } else if(list.size() == 1){
+        } else if (list.size() == 1) {
             StepDcretor.CURRENT_SETP = Integer.parseInt(list.get(0).getStep());
-        }else{
-            Log.v("xf","出错了！");
+        } else {
+            Log.v("xf", "出错了！");
         }
     }
 
-    private void initBroadcastReceiver(){
+    private void initBroadcastReceiver() {
         final IntentFilter filter = new IntentFilter();
         // 屏幕灭屏广播
         filter.addAction(Intent.ACTION_SCREEN_OFF);
@@ -147,7 +146,7 @@ public class StepService extends Service implements SensorEventListener {
                     Log.i("xf", " receive Intent.ACTION_CLOSE_SYSTEM_DIALOGS");
                     //保存一次
                     save();
-                }else if(Intent.ACTION_SHUTDOWN.equals(intent.getAction())){
+                } else if (Intent.ACTION_SHUTDOWN.equals(intent.getAction())) {
                     Log.i("xf", " receive ACTION_SHUTDOWN");
                     save();
                 }
@@ -163,8 +162,7 @@ public class StepService extends Service implements SensorEventListener {
 
     /**
      * 更新通知
-     *
-     * */
+     */
     private void updateNotification(String content) {
         builder = new NotificationCompat.Builder(this);
         builder.setPriority(Notification.PRIORITY_MIN);
@@ -211,43 +209,54 @@ public class StepService extends Service implements SensorEventListener {
             stepDetector = null;
         }
         getLock(this);
-        if (sensorManager == null) {
-            stepDetector = new StepDcretor(this);
-            // 获取传感器管理器的实例
-            sensorManager = (SensorManager) this
-                    .getSystemService(SENSOR_SERVICE);
-            // 获得传感器的类型，这里获得的类型是加速度传感器
-            // 此方法用来注册，只有注册过才会生效，参数：SensorEventListener的实例，Sensor的实例，更新速率
-            Sensor sensor = sensorManager
-                    .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            // sensorManager.unregisterListener(stepDetector);
-            sensorManager.registerListener(stepDetector, sensor,
-                    SensorManager.SENSOR_DELAY_UI);
-            stepDetector
-                    .setOnSensorChangeListener(new StepDcretor.OnSensorChangeListener() {
-
-                        @Override
-                        public void onChange() {
-                            updateNotification("今日步数：" + StepDcretor.CURRENT_SETP +","+i+ " 步");
-                        }
-                    });
-        }
-
         //android4.4以后可以使用计步传感器
+        int VERSION_CODES = android.os.Build.VERSION.SDK_INT;
+        if (VERSION_CODES >= 19) {
+            addCountStepListener();
+        } else {
+            addBasePedoListener();
+        }
+    }
+
+    private void addCountStepListener() {
         sensorManager = (SensorManager) this
-                    .getSystemService(SENSOR_SERVICE);
+                .getSystemService(SENSOR_SERVICE);
         Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
         if (countSensor != null) {
             sensorManager.registerListener(StepService.this, countSensor, SensorManager.SENSOR_DELAY_UI);
         } else {
-            Log.v("xf","Count sensor not available!");
+            Log.v("xf", "Count sensor not available!");
+            addBasePedoListener();
         }
+    }
+
+    private void addBasePedoListener() {
+        stepDetector = new StepDcretor(this);
+        // 获取传感器管理器的实例
+        sensorManager = (SensorManager) this
+                .getSystemService(SENSOR_SERVICE);
+        // 获得传感器的类型，这里获得的类型是加速度传感器
+        // 此方法用来注册，只有注册过才会生效，参数：SensorEventListener的实例，Sensor的实例，更新速率
+        Sensor sensor = sensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        // sensorManager.unregisterListener(stepDetector);
+        sensorManager.registerListener(stepDetector, sensor,
+                SensorManager.SENSOR_DELAY_UI);
+        stepDetector
+                .setOnSensorChangeListener(new StepDcretor.OnSensorChangeListener() {
+
+                    @Override
+                    public void onChange() {
+                        updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
+                    }
+                });
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        i++;
-    //    updateNotification("今日步数：" + i + " 步");
+        //   i++;
+        StepDcretor.CURRENT_SETP++;
+        updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
     }
 
     @Override
@@ -276,7 +285,7 @@ public class StepService extends Service implements SensorEventListener {
 
     }
 
-    private void save(){
+    private void save() {
         int tempStep = StepDcretor.CURRENT_SETP;
 
         List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
@@ -285,14 +294,11 @@ public class StepService extends Service implements SensorEventListener {
             data.setToday(CURRENTDATE);
             data.setStep(tempStep + "");
             DbUtils.insert(data);
-            Log.v("xf", "插入成功");
         } else if (list.size() == 1) {
             StepData data = list.get(0);
             data.setStep(tempStep + "");
             DbUtils.update(data);
-            Log.v("xf", "更新成功");
         } else {
-            Log.v("xf", "出错了！");
         }
     }
 

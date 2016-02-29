@@ -187,7 +187,7 @@ public class StepDcretor implements SensorEventListener {
         }
 
         if (!isDirectionUp && lastStatus
-                && (continueUpFormerCount >= 2 && oldValue >= 11.76 && oldValue < 19.6)) {
+                && (continueUpFormerCount >= 2 || (oldValue >= 11.76 && oldValue < 19.6))) {
             peakOfWave = oldValue;
             return true;
         } else if (!lastStatus && isDirectionUp) {
