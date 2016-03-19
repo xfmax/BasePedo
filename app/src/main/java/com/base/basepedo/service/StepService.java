@@ -51,6 +51,8 @@ public class StepService extends Service implements SensorEventListener {
 
     //测试
     private static int i = 0;
+    //计步传感器类型 0-counter 1-detector
+    private static int stepSensor = -1;
 
 
     private static class MessenerHandler extends Handler {
@@ -209,6 +211,9 @@ public class StepService extends Service implements SensorEventListener {
             stepDetector = null;
         }
         getLock(this);
+        // 获取传感器管理器的实例
+        sensorManager = (SensorManager) this
+                .getSystemService(SENSOR_SERVICE);
         //android4.4以后可以使用计步传感器
         int VERSION_CODES = android.os.Build.VERSION.SDK_INT;
         if (VERSION_CODES >= 19) {
@@ -221,21 +226,22 @@ public class StepService extends Service implements SensorEventListener {
     private void addCountStepListener() {
         Sensor detectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
         Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-       if (detectorSensor != null) {
-            sensorManager.registerListener(StepService.this, detectorSensor, SensorManager.SENSOR_DELAY_UI);
-        } else if (countSensor != null) {
+        if (countSensor != null) {
+            stepSensor = 0;
+            Log.v("base", "countSensor");
             sensorManager.registerListener(StepService.this, countSensor, SensorManager.SENSOR_DELAY_UI);
-        } else{
-           Log.v("xf", "Count sensor not available!");
-           addBasePedoListener(); 
+        } else if (detectorSensor != null) {
+            stepSensor = 1;
+            Log.v("base", "detector");
+            sensorManager.registerListener(StepService.this, detectorSensor, SensorManager.SENSOR_DELAY_UI);
+        } else {
+            Log.v("xf", "Count sensor not available!");
+            addBasePedoListener();
         }
     }
 
     private void addBasePedoListener() {
         stepDetector = new StepDcretor(this);
-        // 获取传感器管理器的实例
-        sensorManager = (SensorManager) this
-                .getSystemService(SENSOR_SERVICE);
         // 获得传感器的类型，这里获得的类型是加速度传感器
         // 此方法用来注册，只有注册过才会生效，参数：SensorEventListener的实例，Sensor的实例，更新速率
         Sensor sensor = sensorManager
@@ -256,7 +262,11 @@ public class StepService extends Service implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         //   i++;
-        StepDcretor.CURRENT_SETP++;
+        if(stepSensor == 0){
+            StepDcretor.CURRENT_SETP = (int)event.values[0];
+        }else if(stepSensor == 1){
+            StepDcretor.CURRENT_SETP++;
+        }
         updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
     }
 
