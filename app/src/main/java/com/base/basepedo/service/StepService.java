@@ -161,13 +161,19 @@ public class StepService extends Service implements SensorEventListener {
                 } else if (Intent.ACTION_SHUTDOWN.equals(intent.getAction())) {
                     Log.v(TAG, " receive ACTION_SHUTDOWN");
                     save();
-                }else if(Intent.ACTION_TIME_CHANGED.equals(intent.getAction())){
+                } else if (Intent.ACTION_TIME_CHANGED.equals(intent.getAction())) {
                     Log.v(TAG, " receive ACTION_TIME_CHANGED");
                     initTodayData();
+                    clearStepData();
                 }
             }
         };
         registerReceiver(mBatInfoReceiver, filter);
+    }
+
+    private void clearStepData() {
+        i = 0;
+        StepService.CURRENTDATE = "0";
     }
 
     private void startTimeCount() {
