@@ -96,8 +96,7 @@ public class StepService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        CURRENTDATE = getTodayDate();
-        initTodayData(CURRENTDATE);
+        initTodayData();
         updateNotification("今日步数：" + StepDcretor.CURRENT_SETP + " 步");
         return START_STICKY;
     }
@@ -108,10 +107,11 @@ public class StepService extends Service implements SensorEventListener {
         return sdf.format(date);
     }
 
-    private void initTodayData(String currentDate) {
+    private void initTodayData() {
+        CURRENTDATE = getTodayDate();
         DbUtils.createDb(this, DB_NAME);
         //获取当天的数据，用于展示
-        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{currentDate});
+        List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
             StepDcretor.CURRENT_SETP = 0;
         } else if (list.size() == 1) {
@@ -125,6 +125,8 @@ public class StepService extends Service implements SensorEventListener {
         final IntentFilter filter = new IntentFilter();
         // 屏幕灭屏广播
         filter.addAction(Intent.ACTION_SCREEN_OFF);
+        //日期修改
+        filter.addAction(Intent.ACTION_TIME_CHANGED);
         //关机广播
         filter.addAction(Intent.ACTION_SHUTDOWN);
         // 屏幕亮屏广播
@@ -159,6 +161,9 @@ public class StepService extends Service implements SensorEventListener {
                 } else if (Intent.ACTION_SHUTDOWN.equals(intent.getAction())) {
                     Log.v(TAG, " receive ACTION_SHUTDOWN");
                     save();
+                }else if(Intent.ACTION_TIME_CHANGED.equals(intent.getAction())){
+                    Log.v(TAG, " receive ACTION_TIME_CHANGED");
+                    initTodayData();
                 }
             }
         };

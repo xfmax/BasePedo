@@ -14,7 +14,6 @@ import java.util.TimerTask;
 public class StepDcretor implements SensorEventListener {
     private final String TAG = "StepDcretor";
     //存放三轴数据
-    float[] oriValues = new float[3];
     final int valueNum = 5;
     //用于存放计算阈值的波峰波谷差值
     float[] tempValue = new float[valueNum];
@@ -57,13 +56,10 @@ public class StepDcretor implements SensorEventListener {
     public static int CURRENT_SETP = 0;
     public static int TEMP_STEP = 0;
     private int lastStep = -1;
-    // 加速计的三个维度数值
-    public static float[] gravity = new float[3];
-    public static float[] linear_acceleration = new float[3];
     //用x、y、z轴三个维度算出的平均值
     public static float average = 0;
     private Timer timer;
-    // 倒计时4秒，4秒内不会显示计步，用于屏蔽细微波动
+    // 倒计时3.5秒，3.5秒内不会显示计步，用于屏蔽细微波动
     private long duration = 3500;
     private TimeCount time;
     OnSensorChangeListener onSensorChangeListener;

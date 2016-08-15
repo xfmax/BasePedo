@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     public boolean handleMessage(Message msg) {
         switch (msg.what) {
             case Constant.MSG_FROM_SERVER:
-                //    Log.v("xf","服务器返回的"+msg.getData().getInt("step"));
+                // 更新界面上的步数
                 text_step.setText(msg.getData().getInt("step") + "");
                 delayHandler.sendEmptyMessageDelayed(Constant.REQUEST_SERVER, TIME_INTERVAL);
                 break;
@@ -71,7 +71,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
-
     }
     private void init() {
         text_step = (TextView) findViewById(R.id.text_step);
