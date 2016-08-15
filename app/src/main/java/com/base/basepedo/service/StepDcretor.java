@@ -12,9 +12,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StepDcretor implements SensorEventListener {
+    private final String TAG = "StepDcretor";
     //存放三轴数据
     float[] oriValues = new float[3];
-    final int valueNum = 4;
+    final int valueNum = 5;
     //用于存放计算阈值的波峰波谷差值
     float[] tempValue = new float[valueNum];
     int tempCount = 0;
@@ -45,20 +46,9 @@ public class StepDcretor implements SensorEventListener {
     //初始阈值
     float ThreadValue = (float) 2.0;
 
-    private final String TAG = "StepDcretor";
-    // alpha 由 t / (t + dT)计算得来，其中 t 是低通滤波器的时间常数，dT 是事件报送频率
-//    private final float alpha = 0.8f;
-//    private long perCalTime = 0;
-//
-//    //最新修改的精度值
-//    private final float minValue = 9.8f;
-//    private final float maxValue = 9.9f;
-//    //9.5f
-//    private final float verminValue = 8.5f;
-//    //10.0f
-//    private final float vermaxValue = 11.5f;
-//    private final float minTime = 150;
-//    private final float maxTime = 2000;
+    //初始范围
+    float minValue = 11f;
+    float maxValue = 19.6f;
 
     /**
      * 0-准备计时   1-计时中  2-准备为正常计步计时  3-正常计步中
@@ -70,14 +60,12 @@ public class StepDcretor implements SensorEventListener {
     // 加速计的三个维度数值
     public static float[] gravity = new float[3];
     public static float[] linear_acceleration = new float[3];
-    //用三个维度算出的平均值
+    //用x、y、z轴三个维度算出的平均值
     public static float average = 0;
-
     private Timer timer;
     // 倒计时4秒，4秒内不会显示计步，用于屏蔽细微波动
-    private long duration = 4000;
+    private long duration = 3500;
     private TimeCount time;
-
     OnSensorChangeListener onSensorChangeListener;
 
     public interface OnSensorChangeListener {
@@ -89,7 +77,6 @@ public class StepDcretor implements SensorEventListener {
     }
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
-
     }
 
     public OnSensorChangeListener getOnSensorChangeListener() {
@@ -113,7 +100,7 @@ public class StepDcretor implements SensorEventListener {
     synchronized private void calc_step(SensorEvent event) {
         average = (float) Math.sqrt(Math.pow(event.values[0], 2)
                 + Math.pow(event.values[1], 2) + Math.pow(event.values[2], 2));
-        DetectorNewStep(average);
+        detectorNewStep(average);
     }
 
     /*
@@ -122,15 +109,16 @@ public class StepDcretor implements SensorEventListener {
 	 * 2.如果检测到了波峰，并且符合时间差以及阈值的条件，则判定为1步
 	 * 3.符合时间差条件，波峰波谷差值大于initialValue，则将该差值纳入阈值的计算中
 	 * */
-    public void DetectorNewStep(float values) {
+    public void detectorNewStep(float values) {
         if (gravityOld == 0) {
             gravityOld = values;
         } else {
             if (DetectorPeak(values, gravityOld)) {
                 timeOfLastPeak = timeOfThisPeak;
                 timeOfNow = System.currentTimeMillis();
+
                 if (timeOfNow - timeOfLastPeak >= 200
-                        && (peakOfWave - valleyOfWave >= ThreadValue) && timeOfNow - timeOfLastPeak <= 2000) {
+                        && (peakOfWave - valleyOfWave >= ThreadValue) && (timeOfNow - timeOfLastPeak) <= 2000) {
                     timeOfThisPeak = timeOfNow;
                     //更新界面的处理，不涉及到算法
                     preStep();
@@ -186,8 +174,9 @@ public class StepDcretor implements SensorEventListener {
             isDirectionUp = false;
         }
 
+        Log.v(TAG, "oldValue:" + oldValue);
         if (!isDirectionUp && lastStatus
-                && (continueUpFormerCount >= 2 && (oldValue >= 11.76 && oldValue < 19.6))) {
+                && (continueUpFormerCount >= 2 && (oldValue >= minValue && oldValue < maxValue))) {
             peakOfWave = oldValue;
             return true;
         } else if (!lastStatus && isDirectionUp) {
@@ -231,16 +220,21 @@ public class StepDcretor implements SensorEventListener {
             ave += value[i];
         }
         ave = ave / valueNum;
-        if (ave >= 8)
+        if (ave >= 8) {
+            Log.v(TAG, "超过8");
             ave = (float) 4.3;
-        else if (ave >= 7 && ave < 8)
+        } else if (ave >= 7 && ave < 8) {
+            Log.v(TAG, "7-8");
             ave = (float) 3.3;
-        else if (ave >= 4 && ave < 7)
+        } else if (ave >= 4 && ave < 7) {
+            Log.v(TAG, "4-7");
             ave = (float) 2.3;
-        else if (ave >= 3 && ave < 4)
+        } else if (ave >= 3 && ave < 4) {
+            Log.v(TAG, "3-4");
             ave = (float) 2.0;
-        else {
-            ave = (float) 1.3;
+        } else {
+            Log.v(TAG, "else");
+            ave = (float) 1.7;
         }
         return ave;
     }
@@ -273,7 +267,7 @@ public class StepDcretor implements SensorEventListener {
                     }
                 }
             };
-            timer.schedule(task, 0, 3000);
+            timer.schedule(task, 0, 2000);
             CountTimeState = 3;
         }
 
@@ -292,46 +286,4 @@ public class StepDcretor implements SensorEventListener {
 
     }
 
-
-    //废弃的算法
-    //    private void oldCalStep(SensorEvent event) {
-//        // 用低通滤波器分离出重力加速度
-//        gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
-//        gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
-//        gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
-//
-//        average = (float) Math.sqrt(Math.pow(gravity[0], 2)
-//                + Math.pow(gravity[1], 2) + Math.pow(gravity[2], 2));
-//
-//        if (average <= minValue) {
-//            Log.v("xfblog", "低");
-//            perCalTime = System.currentTimeMillis();
-//        }
-//        else if (average >= maxValue) {
-//            Log.v("xfblog", "高");
-//            float betweentime = System.currentTimeMillis()
-//                    - perCalTime;
-//            if (betweentime >= minTime && betweentime < maxTime) {
-//                perCalTime = 0;
-//                if (CountTimeState == 0) {
-//                    // 开启计时器
-//                    time = new TimeCount(duration, 800);
-//                    time.start();
-//                    CountTimeState = 1;
-//                    Log.v(TAG, "开启计时器");
-//                } else if (CountTimeState == 1) {
-//                    TEMP_STEP++;
-//                    Log.v(TAG, "计步中 TEMP_STEP:" + TEMP_STEP);
-//                }
-//                else if (CountTimeState == 3) {
-//                    CURRENT_SETP++;
-//                    if (onSensorChangeListener != null) {
-//                        onSensorChangeListener.onChange();
-//                    }
-//                }
-//
-//
-//            }
-//        }
-//    }
 }

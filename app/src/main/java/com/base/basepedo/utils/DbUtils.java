@@ -24,7 +24,6 @@ public class DbUtils {
         }
     }
 
-
     public static LiteOrm getLiteOrm() {
         return liteOrm;
     }
