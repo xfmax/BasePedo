@@ -50,7 +50,7 @@ public class StepDcretor implements SensorEventListener {
     float maxValue = 19.6f;
 
     /**
-     * 0-准备计时   1-计时中  2-准备为正常计步计时  3-正常计步中
+     * 0-准备计时   1-计时中   2-正常计步中
      */
     private int CountTimeState = 0;
     public static int CURRENT_SETP = 0;
@@ -139,14 +139,13 @@ public class StepDcretor implements SensorEventListener {
         } else if (CountTimeState == 1) {
             TEMP_STEP++;
             Log.v(TAG, "计步中 TEMP_STEP:" + TEMP_STEP);
-        } else if (CountTimeState == 3) {
+        } else if (CountTimeState == 2) {
             CURRENT_SETP++;
             if (onSensorChangeListener != null) {
                 onSensorChangeListener.onChange();
             }
         }
     }
-
 
     /*
      * 检测波峰
@@ -264,7 +263,7 @@ public class StepDcretor implements SensorEventListener {
                 }
             };
             timer.schedule(task, 0, 2000);
-            CountTimeState = 3;
+            CountTimeState = 2;
         }
 
         @Override
