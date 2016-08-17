@@ -8,7 +8,7 @@ import android.util.Log;
 /**
  * 开机完成广播
  *
- * Created by xf on 2016/3/1.
+ * Created by base on 2016/3/1.
  */
 public class BootCompleteReceiver extends BroadcastReceiver {
     @Override

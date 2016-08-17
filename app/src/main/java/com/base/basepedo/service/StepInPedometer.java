@@ -10,7 +10,7 @@ import com.base.basepedo.base.StepMode;
 import com.base.basepedo.callback.StepCallBack;
 
 /**
- * Created by axufeng on 2016/8/17.
+ * Created by base on 2016/8/17.
  */
 public class StepInPedometer extends StepMode {
     private final String TAG = "StepInPedometer";

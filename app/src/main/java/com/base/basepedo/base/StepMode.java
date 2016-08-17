@@ -9,7 +9,7 @@ import com.base.basepedo.callback.StepCallBack;
 /**
  * 计步模式分为 加速度传感器 google内置计步器
  * <p/>
- * Created by axufeng on 2016/8/17.
+ * Created by base on 2016/8/17.
  */
 public abstract class StepMode implements SensorEventListener {
     private Context context;

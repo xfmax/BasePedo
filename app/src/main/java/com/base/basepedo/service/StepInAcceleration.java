@@ -14,7 +14,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Created by axufeng on 2016/8/17.
+ * Created by base on 2016/8/17.
  */
 public class StepInAcceleration extends StepMode {
     private final String TAG = "StepInAcceleration";
