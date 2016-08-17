@@ -51,8 +51,6 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     private BroadcastReceiver mBatInfoReceiver;
     private WakeLock mWakeLock;
     private TimeCount time;
-    //测试
-    private static int i = 0;
     //当前显示的步数
     private static int stepNum;
     //当天的日期
@@ -263,7 +261,6 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     private void clearStepData() {
-        i = 0;
         stepNum = 0;
     }
 
