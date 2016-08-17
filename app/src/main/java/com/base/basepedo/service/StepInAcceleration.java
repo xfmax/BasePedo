@@ -83,7 +83,7 @@ public class StepInAcceleration extends StepMode {
         Sensor sensor = sensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         // sensorManager.unregisterListener(stepDetector);
-        boolean isAvailable =  sensorManager.registerListener(this, sensor,
+        isAvailable =  sensorManager.registerListener(this, sensor,
                 SensorManager.SENSOR_DELAY_UI);
         if(isAvailable){
             Log.v(TAG,"加速度传感器可以使用");

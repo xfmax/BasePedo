@@ -14,6 +14,9 @@ import com.base.basepedo.callback.StepCallBack;
  */
 public class StepInPedometer extends StepMode {
     private final String TAG = "StepInPedometer";
+    private int lastStep = -1;
+    private int liveStep = 0;
+    private int increment = 0;
 
     public StepInPedometer(Context context, StepCallBack stepCallBack) {
         super(context, stepCallBack);
@@ -26,8 +29,13 @@ public class StepInPedometer extends StepMode {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        StepMode.CURRENT_SETP++;
-        stepCallBack.Step(StepMode.CURRENT_SETP);
+        liveStep = (int) event.values[0];
+        if(lastStep != -1 && lastStep != liveStep){
+            increment = liveStep - lastStep;
+            StepMode.CURRENT_SETP += increment;
+            stepCallBack.Step(StepMode.CURRENT_SETP);
+        }
+        lastStep = liveStep;
     }
 
     @Override
