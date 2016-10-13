@@ -32,12 +32,12 @@ public class BaseApplication extends DaemonApplication {
     @Override
     protected DaemonConfigurations getDaemonConfigurations() {
         DaemonConfigurations.DaemonConfiguration configuration1 = new DaemonConfigurations.DaemonConfiguration(
-                "com.marswin89.marsdaemon.demo:process1",
+                "com.base.basepedo:process1",
                 StepService.class.getCanonicalName(),
                 Receiver1.class.getCanonicalName());
 
         DaemonConfigurations.DaemonConfiguration configuration2 = new DaemonConfigurations.DaemonConfiguration(
-                "com.marswin89.marsdaemon.demo:process2",
+                "com.base.basepedo:process2",
                 Service2.class.getCanonicalName(),
                 Receiver2.class.getCanonicalName());
 
