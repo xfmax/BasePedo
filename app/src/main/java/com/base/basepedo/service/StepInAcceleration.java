@@ -58,7 +58,6 @@ public class StepInAcceleration extends StepMode {
      * 0-准备计时   1-计时中  2-正常计步中
      */
     private int CountTimeState = 0;
-    public static int CURRENT_SETP = 0;
     public static int TEMP_STEP = 0;
     private int lastStep = -1;
     //用x、y、z轴三个维度算出的平均值
@@ -69,7 +68,7 @@ public class StepInAcceleration extends StepMode {
     private TimeCount time;
 
     public StepInAcceleration(Context context, StepCallBack stepCallBack) {
-        super(context,stepCallBack);
+        super(context, stepCallBack);
     }
 
     @Override
@@ -83,12 +82,12 @@ public class StepInAcceleration extends StepMode {
         Sensor sensor = sensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         // sensorManager.unregisterListener(stepDetector);
-        isAvailable =  sensorManager.registerListener(this, sensor,
+        isAvailable = sensorManager.registerListener(this, sensor,
                 SensorManager.SENSOR_DELAY_UI);
-        if(isAvailable){
-            Log.v(TAG,"加速度传感器可以使用");
-        }else{
-            Log.v(TAG,"加速度传感器无法使用");
+        if (isAvailable) {
+            Log.v(TAG, "加速度传感器可以使用");
+        } else {
+            Log.v(TAG, "加速度传感器无法使用");
         }
     }
 
@@ -280,7 +279,7 @@ public class StepInAcceleration extends StepMode {
         @Override
         public void onTick(long millisUntilFinished) {
             if (lastStep == TEMP_STEP) {
-                Log.v(TAG, "onTick 计时停止");
+                Log.v(TAG, "onTick 计时停止:" + TEMP_STEP);
                 time.cancel();
                 CountTimeState = 0;
                 lastStep = -1;
