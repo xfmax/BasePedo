@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BasePedo.iml" filepath="$PROJECT_DIR$/BasePedo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/LibMarsdaemon/LibMarsdaemon.iml" filepath="$PROJECT_DIR$/LibMarsdaemon/LibMarsdaemon.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

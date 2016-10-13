@@ -51,8 +51,6 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     private BroadcastReceiver mBatInfoReceiver;
     private WakeLock mWakeLock;
     private TimeCount time;
-    //当前显示的步数
-    private static int stepNum;
     //当天的日期
     private String CURRENTDATE = "";
 
@@ -65,7 +63,7 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
                         Messenger messenger = msg.replyTo;
                         Message replyMsg = Message.obtain(null, Constant.MSG_FROM_SERVER);
                         Bundle bundle = new Bundle();
-                        bundle.putInt("step", stepNum);
+                        bundle.putInt("step", StepMode.CURRENT_SETP);
                         replyMsg.setData(bundle);
                         messenger.send(replyMsg);
                     } catch (RemoteException e) {
@@ -81,12 +79,14 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.v(TAG,"onCreate");
         initBroadcastReceiver();
         startStep();
         startTimeCount();
     }
 
     private void initBroadcastReceiver() {
+        Log.v(TAG,"initBroadcastReceiver");
         final IntentFilter filter = new IntentFilter();
         // 屏幕灭屏广播
         filter.addAction(Intent.ACTION_SCREEN_OFF);
@@ -137,15 +137,16 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     private void startStep() {
-        StepMode mode = new StepInPedometer(this, this);
-        boolean isAvailable = mode.getStep();
-        if (!isAvailable) {
-            mode = new StepInAcceleration(this, this);
-            isAvailable = mode.getStep();
+//        StepMode mode = new StepInPedometer(this, this);
+//        boolean isAvailable = mode.getStep();
+//        Log.v(TAG, "startStep1");
+//        if (!isAvailable) {
+           StepMode mode = new StepInAcceleration(this, this);
+           boolean isAvailable = mode.getStep();
             if (isAvailable) {
                 Log.v(TAG, "acceleration can execute!");
             }
-        }
+//        }
     }
 
     private void startTimeCount() {
@@ -155,14 +156,9 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
 
     @Override
     public void Step(int stepNum) {
-        this.stepNum = stepNum;
+        StepMode.CURRENT_SETP = stepNum;
         Log.v(TAG, "Step:" + stepNum);
         updateNotification("今日步数：" + stepNum + " 步");
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return messenger.getBinder();
     }
 
     @Override
@@ -171,9 +167,14 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     @Override
+    public IBinder onBind(Intent intent) {
+        return messenger.getBinder();
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         initTodayData();
-        updateNotification("今日步数：" + stepNum + " 步");
+        updateNotification("今日步数：" + StepMode.CURRENT_SETP  + " 步");
         return START_STICKY;
     }
 
@@ -183,9 +184,9 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
         //获取当天的数据，用于展示
         List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
-            stepNum = 0;
+            StepMode.CURRENT_SETP  = 0;
         } else if (list.size() == 1) {
-            stepNum = Integer.parseInt(list.get(0).getStep());
+            StepMode.CURRENT_SETP  = Integer.parseInt(list.get(0).getStep());
         } else {
             Log.v(TAG, "It's wrong！");
         }
@@ -245,7 +246,7 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     private void save() {
-        int tempStep = stepNum;
+        int tempStep = StepMode.CURRENT_SETP ;
         List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
             StepData data = new StepData();
@@ -261,7 +262,7 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     private void clearStepData() {
-        stepNum = 0;
+        StepMode.CURRENT_SETP  = 0;
     }
 
     @Override

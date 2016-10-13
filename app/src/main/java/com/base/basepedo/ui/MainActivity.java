@@ -1,5 +1,6 @@
 package com.base.basepedo.ui;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,20 +12,24 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.base.basepedo.R;
 import com.base.basepedo.config.Constant;
 import com.base.basepedo.service.StepService;
 
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements Handler.Callback {
+    private final String TAG = MainActivity.class.getSimpleName();
     //循环取当前时刻的步数中间的间隔时间
     private long TIME_INTERVAL = 500;
     private TextView text_step;
     private Messenger messenger;
     private Messenger mGetReplyMessenger = new Messenger(new Handler(this));
-    private Handler delayHandler;
 
+    private Handler delayHandler;
     ServiceConnection conn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -71,7 +76,17 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
+        startServiceForStrategy();
     }
+
+    private void startServiceForStrategy() {
+        if (!isServiceWork(this, StepService.class.getName())) {
+            setupService(true);
+        } else {
+            setupService(false);
+        }
+    }
+
     private void init() {
         text_step = (TextView) findViewById(R.id.text_step);
         delayHandler = new Handler(this);
@@ -80,13 +95,45 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     @Override
     protected void onStart() {
         super.onStart();
-        setupService();
     }
 
-    private void setupService() {
+    /**
+     * 启动service
+     *
+     * @param flag true-bind和start两种方式一起执行 false-只执行bind方式
+     */
+    private void setupService(boolean flag) {
         Intent intent = new Intent(this, StepService.class);
         bindService(intent, conn, Context.BIND_AUTO_CREATE);
-        startService(intent);
+        if (flag) {
+            startService(intent);
+        }
+    }
+
+
+    /**
+     * 判断某个服务是否正在运行的方法
+     *
+     * @param mContext
+     * @param serviceName 是包名+服务的类名（例如：net.loonggg.testbackstage.TestService）
+     * @return true代表正在运行，false代表服务没有正在运行
+     */
+    public boolean isServiceWork(Context mContext, String serviceName) {
+        boolean isWork = false;
+        ActivityManager myAM = (ActivityManager) mContext
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> myList = myAM.getRunningServices(40);
+        if (myList.size() <= 0) {
+            return false;
+        }
+        for (int i = 0; i < myList.size(); i++) {
+            String mName = myList.get(i).service.getClassName().toString();
+            if (mName.equals(serviceName)) {
+                isWork = true;
+                break;
+            }
+        }
+        return isWork;
     }
 
     @Override

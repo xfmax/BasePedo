@@ -3,14 +3,11 @@
     package="com.base.basepedo">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <uses-feature android:name="android.hardware.sensor.accelerometer" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
+        android:name=".base.BaseApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -25,14 +22,15 @@
             </intent-filter>
         </activity>
 
+        <!--android:process="com.base.basepedo.step"-->
         <service
             android:name="com.base.basepedo.service.StepService"
-            android:process="com.base.basepedo.step"
-            android:priority="1000">
-            <intent-filter >
+            android:priority="1000"
+            android:process=":process1">
+            <intent-filter>
                 <!-- 系统启动完成后会调用-->
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.DATE_CHANGED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
                 <action android:name="android.intent.action.MEDIA_MOUNTED" />
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.intent.action.ACTION_TIME_TICK" />
@@ -40,12 +38,34 @@
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
             </intent-filter>
         </service>
+        <uses-feature android:name="android.hardware.sensor.accelerometer" />
+
+        <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+        <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
         <receiver android:name=".service.BootCompleteReceiver">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+
+        <!-- 守护进程相关 -->
+
+        <receiver
+            android:name=".receiver.Receiver1"
+            android:process=":process1" />
+
+        <service
+            android:name=".service.Service2"
+            android:process=":process2" />
+        <receiver
+            android:name=".receiver.Receiver2"
+            android:process=":process2" />
+
+
     </application>
 
 </manifest>
