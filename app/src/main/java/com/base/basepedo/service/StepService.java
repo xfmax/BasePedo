@@ -79,19 +79,19 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.v(TAG,"onCreate");
+        Log.v(TAG, "onCreate");
         initBroadcastReceiver();
         startStep();
         startTimeCount();
     }
 
     private void initBroadcastReceiver() {
-        Log.v(TAG,"initBroadcastReceiver");
+        Log.v(TAG, "initBroadcastReceiver");
         final IntentFilter filter = new IntentFilter();
         // 屏幕灭屏广播
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         //日期修改
-        filter.addAction(Intent.ACTION_TIME_CHANGED);
+        filter.addAction(Intent.ACTION_DATE_CHANGED);
         //关机广播
         filter.addAction(Intent.ACTION_SHUTDOWN);
         // 屏幕亮屏广播
@@ -126,10 +126,12 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
                 } else if (Intent.ACTION_SHUTDOWN.equals(intent.getAction())) {
                     Log.v(TAG, " receive ACTION_SHUTDOWN");
                     save();
-                } else if (Intent.ACTION_TIME_CHANGED.equals(intent.getAction())) {
-                    Log.v(TAG, " receive ACTION_TIME_CHANGED");
+                } else if (Intent.ACTION_DATE_CHANGED.equals(intent.getAction())) {
+                    Log.v(TAG, " receive ACTION_DATE_CHANGED");
                     initTodayData();
                     clearStepData();
+                    Log.v(TAG, "归零数据："+StepMode.CURRENT_SETP);
+                    Step(StepMode.CURRENT_SETP);
                 }
             }
         };
@@ -174,7 +176,7 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         initTodayData();
-        updateNotification("今日步数：" + StepMode.CURRENT_SETP  + " 步");
+        updateNotification("今日步数：" + StepMode.CURRENT_SETP + " 步");
         return START_STICKY;
     }
 
@@ -184,9 +186,9 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
         //获取当天的数据，用于展示
         List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
-            StepMode.CURRENT_SETP  = 0;
+            StepMode.CURRENT_SETP = 0;
         } else if (list.size() == 1) {
-            StepMode.CURRENT_SETP  = Integer.parseInt(list.get(0).getStep());
+            StepMode.CURRENT_SETP = Integer.parseInt(list.get(0).getStep());
         } else {
             Log.v(TAG, "It's wrong！");
         }
@@ -246,7 +248,7 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     private void save() {
-        int tempStep = StepMode.CURRENT_SETP ;
+        int tempStep = StepMode.CURRENT_SETP;
         List<StepData> list = DbUtils.getQueryByWhere(StepData.class, "today", new String[]{CURRENTDATE});
         if (list.size() == 0 || list.isEmpty()) {
             StepData data = new StepData();
@@ -262,7 +264,7 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     }
 
     private void clearStepData() {
-        StepMode.CURRENT_SETP  = 0;
+        StepMode.CURRENT_SETP = 0;
     }
 
     @Override
