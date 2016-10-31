@@ -139,7 +139,6 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
     private void startStep() {
         StepMode mode = new StepInPedometer(this, this);
         boolean isAvailable = mode.getStep();
-        Log.v(TAG, "startStep1");
         if (!isAvailable) {
             mode = new StepInAcceleration(this, this);
             isAvailable = mode.getStep();

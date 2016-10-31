@@ -9,7 +9,7 @@ import android.os.IBinder;
  *
  * Created by Mars on 12/24/15.
  */
-public class Service2 extends Service{
+public class DaemonService extends Service{
 
     @Override
     public IBinder onBind(Intent intent) {

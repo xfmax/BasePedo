@@ -51,7 +51,6 @@
             </intent-filter>
         </receiver>
 
-
         <!-- 守护进程相关 -->
 
         <receiver
@@ -59,12 +58,11 @@
             android:process=":process1" />
 
         <service
-            android:name=".service.Service2"
+            android:name=".service.DaemonService"
             android:process=":process2" />
         <receiver
             android:name=".receiver.Receiver2"
             android:process=":process2" />
-
 
     </application>
 

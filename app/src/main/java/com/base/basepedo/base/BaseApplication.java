@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.base.basepedo.receiver.Receiver1;
 import com.base.basepedo.receiver.Receiver2;
-import com.base.basepedo.service.Service2;
+import com.base.basepedo.service.DaemonService;
 import com.base.basepedo.service.StepService;
 import com.marswin89.marsdaemon.DaemonApplication;
 import com.marswin89.marsdaemon.DaemonConfigurations;
@@ -38,7 +38,7 @@ public class BaseApplication extends DaemonApplication {
 
         DaemonConfigurations.DaemonConfiguration configuration2 = new DaemonConfigurations.DaemonConfiguration(
                 "com.base.basepedo:process2",
-                Service2.class.getCanonicalName(),
+                DaemonService.class.getCanonicalName(),
                 Receiver2.class.getCanonicalName());
 
         DaemonConfigurations.DaemonListener listener = new MyDaemonListener();

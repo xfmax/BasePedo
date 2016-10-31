@@ -5,7 +5,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import com.base.basepedo.callback.StepCallBack;
 
-
 /**
  * 计步模式分为 加速度传感器 google内置计步器
  * <p/>
