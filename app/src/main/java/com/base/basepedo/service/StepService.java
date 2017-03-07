@@ -41,6 +41,7 @@ import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
 public class StepService extends Service implements /*SensorEventListener,*/ StepCallBack {
+    private static final long SCREEN_OFF_RECEIVER_DELAY = 500l;
     private final String TAG = "StepService";
     private String DB_NAME = "basepedo";
     //默认为30秒进行一次存储
@@ -114,6 +115,13 @@ public class StepService extends Service implements /*SensorEventListener,*/ Ste
                     Log.v(TAG, "screen off");
                     //改为60秒一存储
                     duration = 60000;
+                    //解决某些厂商的rom在锁屏后收不到sensor的回调
+                    Runnable runnable = new Runnable() {
+                        @Override public void run() {
+                            startStep();
+                        }
+                    };
+                    new Handler().postDelayed(runnable,SCREEN_OFF_RECEIVER_DELAY);
                 } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
                     Log.v(TAG, "screen unlock");
                     save();
