@@ -9,7 +9,7 @@ import com.litesuits.orm.db.model.ConflictAlgorithm;
 import java.util.List;
 
 /**
- * Created by xf on 2016/1/31.
+ * Created by base on 2016/1/31.
  */
 public class DbUtils {
 

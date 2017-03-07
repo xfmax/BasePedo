@@ -3,16 +3,21 @@ package com.base.basepedo.service;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.util.Log;
 
+import com.base.basepedo.base.StepMode;
+import com.base.basepedo.callback.StepCallBack;
 import com.base.basepedo.utils.CountDownTimer;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class StepDcretor implements SensorEventListener {
-    private final String TAG = "StepDcretor";
+/**
+ * Created by base on 2016/8/17.
+ */
+public class StepInAcceleration extends StepMode {
+    private final String TAG = "StepInAcceleration";
     //存放三轴数据
     final int valueNum = 5;
     //用于存放计算阈值的波峰波谷差值
@@ -50,10 +55,9 @@ public class StepDcretor implements SensorEventListener {
     float maxValue = 19.6f;
 
     /**
-     * 0-准备计时   1-计时中   2-正常计步中
+     * 0-准备计时   1-计时中  2-正常计步中
      */
     private int CountTimeState = 0;
-    public static int CURRENT_SETP = 0;
     public static int TEMP_STEP = 0;
     private int lastStep = -1;
     //用x、y、z轴三个维度算出的平均值
@@ -62,26 +66,32 @@ public class StepDcretor implements SensorEventListener {
     // 倒计时3.5秒，3.5秒内不会显示计步，用于屏蔽细微波动
     private long duration = 3500;
     private TimeCount time;
-    OnSensorChangeListener onSensorChangeListener;
 
-    public interface OnSensorChangeListener {
-        void onChange();
+    public StepInAcceleration(Context context, StepCallBack stepCallBack) {
+        super(context, stepCallBack);
     }
 
-    public StepDcretor(Context context) {
-        super();
+    @Override
+    protected void registerSensor() {
+        addBasePedoListener();
+    }
+
+    private void addBasePedoListener() {
+        // 获得传感器的类型，这里获得的类型是加速度传感器
+        // 此方法用来注册，只有注册过才会生效，参数：SensorEventListener的实例，Sensor的实例，更新速率
+        Sensor sensor = sensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        // sensorManager.unregisterListener(stepDetector);
+        isAvailable = sensorManager.registerListener(this, sensor,
+                SensorManager.SENSOR_DELAY_UI);
+        if (isAvailable) {
+            Log.v(TAG, "加速度传感器可以使用");
+        } else {
+            Log.v(TAG, "加速度传感器无法使用");
+        }
     }
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
-    }
-
-    public OnSensorChangeListener getOnSensorChangeListener() {
-        return onSensorChangeListener;
-    }
-
-    public void setOnSensorChangeListener(
-            OnSensorChangeListener onSensorChangeListener) {
-        this.onSensorChangeListener = onSensorChangeListener;
     }
 
     public void onSensorChanged(SensorEvent event) {
@@ -141,11 +151,12 @@ public class StepDcretor implements SensorEventListener {
             Log.v(TAG, "计步中 TEMP_STEP:" + TEMP_STEP);
         } else if (CountTimeState == 2) {
             CURRENT_SETP++;
-            if (onSensorChangeListener != null) {
-                onSensorChangeListener.onChange();
+            if (stepCallBack != null) {
+                stepCallBack.Step(CURRENT_SETP);
             }
         }
     }
+
 
     /*
      * 检测波峰
@@ -169,7 +180,7 @@ public class StepDcretor implements SensorEventListener {
             isDirectionUp = false;
         }
 
-        Log.v(TAG, "oldValue:" + oldValue);
+//        Log.v(TAG, "oldValue:" + oldValue);
         if (!isDirectionUp && lastStatus
                 && (continueUpFormerCount >= 2 && (oldValue >= minValue && oldValue < maxValue))) {
             peakOfWave = oldValue;
@@ -216,19 +227,19 @@ public class StepDcretor implements SensorEventListener {
         }
         ave = ave / valueNum;
         if (ave >= 8) {
-            Log.v(TAG, "超过8");
+//            Log.v(TAG, "超过8");
             ave = (float) 4.3;
         } else if (ave >= 7 && ave < 8) {
-            Log.v(TAG, "7-8");
+//            Log.v(TAG, "7-8");
             ave = (float) 3.3;
         } else if (ave >= 4 && ave < 7) {
-            Log.v(TAG, "4-7");
+//            Log.v(TAG, "4-7");
             ave = (float) 2.3;
         } else if (ave >= 3 && ave < 4) {
-            Log.v(TAG, "3-4");
+//            Log.v(TAG, "3-4");
             ave = (float) 2.0;
         } else {
-            Log.v(TAG, "else");
+//            Log.v(TAG, "else");
             ave = (float) 1.7;
         }
         return ave;
@@ -245,7 +256,6 @@ public class StepDcretor implements SensorEventListener {
             time.cancel();
             CURRENT_SETP += TEMP_STEP;
             lastStep = -1;
-//            CountTimeState = 2;
             Log.v(TAG, "计时正常结束");
 
             timer = new Timer(true);
@@ -269,7 +279,7 @@ public class StepDcretor implements SensorEventListener {
         @Override
         public void onTick(long millisUntilFinished) {
             if (lastStep == TEMP_STEP) {
-                Log.v(TAG, "onTick 计时停止");
+                Log.v(TAG, "onTick 计时停止:" + TEMP_STEP);
                 time.cancel();
                 CountTimeState = 0;
                 lastStep = -1;
