@@ -33,7 +33,7 @@ v1.0（2016-01-06）
 #####[DEMO APK](https://github.com/xfmax/BasePedo/raw/master/sample/basepedo.apk)
 
 如果你有任何问题、想法或者想交个朋友，可以通过邮件联系我:
-xufengbase@gmail.com
+xufengbase@gmail.com，一般邮件我都是回的，除非我加班累成狗，或者离开地球，尽请见谅。
 
 
 ## License
