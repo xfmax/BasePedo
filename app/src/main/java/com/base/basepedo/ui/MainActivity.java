@@ -1,5 +1,6 @@
 package com.base.basepedo.ui;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
