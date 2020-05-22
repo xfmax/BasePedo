@@ -12,7 +12,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.base.basepedo.R;
@@ -88,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     }
 
     private void init() {
-        text_step = (TextView) findViewById(R.id.text_step);
+        text_step = findViewById(R.id.text_step);
         delayHandler = new Handler(this);
     }
 
@@ -110,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         }
     }
 
-
     /**
      * 判断某个服务是否正在运行的方法
      *
@@ -120,8 +118,8 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
      */
     public boolean isServiceWork(Context mContext, String serviceName) {
         boolean isWork = false;
-        ActivityManager myAM = (ActivityManager) mContext
-                .getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager myAM =
+            (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningServiceInfo> myList = myAM.getRunningServices(40);
         if (myList.size() <= 0) {
             return false;
