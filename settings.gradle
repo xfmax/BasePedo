@@ -1,1 +1,1 @@
-include ':app', ':LibMarsdaemon'
+include ':app'
