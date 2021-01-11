@@ -34,8 +34,8 @@ v1.0（2016-01-06）
 * 停止运动超过5秒，便重新开启屏蔽功能。
   
 
-###  DownLoad：
-#####[DEMO APK](https://github.com/xfmax/BasePedo/raw/master/sample/basepedo.apk)
+### DownLoad：
+##### [DEMO APK](https://github.com/xfmax/BasePedo/raw/master/sample/basepedo.apk)
 
 如果你有任何问题、想法或者想交个朋友，可以通过邮件联系我:
 xufengbase@gmail.com，一般邮件我都是回的，当然如果你的问题太过简单，例如像怎么下载代码这些问题，请先google！
